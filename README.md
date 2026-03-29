@@ -1,1 +1,1 @@
-# Cosine---Based-Exploration-of-Word-Relationships
+# Cosine-Based Exploration of Word Relationships
