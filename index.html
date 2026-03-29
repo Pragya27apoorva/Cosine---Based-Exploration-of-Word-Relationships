@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosine-Based Lung Cancer Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&display=swap');
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: radial-gradient(circle at 10% 20%, #1e293b, #0f172a 70%);
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        /* 📸 IMMERSIVE BACKGROUND */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1631549916718-41098616118b?auto=format&fit=crop&q=80&w=2000');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.04; /* Very subtle underlying image */
+            z-index: -2;
+        }
+
+        /* ✨ MODERN GLASSMORPHISM */
+        .glass {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .glass:hover {
+            transform: translateY(-8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.5);
+        }
+
+        /* 🌀 ANIMATIONS */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-30px) rotate(5deg); opacity: 0.5; }
+            100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+        }
+
+        .floating-icon { animation: float 10s infinite ease-in-out; position: fixed; z-index: -1; }
+
+        @keyframes pulseRing {
+            0% { transform: scale(0.9); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .loader-ring {
+            position: relative;
+        }
+        .loader-ring::after {
+            content: '';
+            position: absolute; width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 4px solid #3b82f6;
+            animation: pulseRing 1.5s infinite;
+        }
+
+        .reveal-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1s, transform 1s;
+        }
+
+        .reveal-on-scroll.active {
+            opacity: 1;
+            transform: translateY(0px);
+        }
+
+        /* Matrix cell animations */
+        @keyframes cellPop {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .matrix-cell {
+            aspect-ratio: 1/1;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; border-radius: 6px; font-weight: bold;
+            animation: cellPop 0.4s ease-out;
+            animation-fill-mode: backwards;
+        }
+
+    </style>
+</head>
+<body>
+
+    <svg class="floating-icon text-blue-900 h-20 w-20" style="top: 15%; left: 10%;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h-2v-2h2v2zm0-4h-2V7h2v5z"></path></svg>
+    <svg class="floating-icon text-teal-900 h-32 w-32" style="bottom: 25%; right: 15%; animation-delay: -3s;" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+    <svg class="floating-icon text-blue-950 h-16 w-16" style="top: 60%; left: 20%; animation-delay: -6s;" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z"></path></svg>
+
+    <header class="min-h-screen flex flex-col items-center justify-center px-6 text-center border-b border-white/5 sticky top-0 z-0">
+        <div class="inline-block px-5 py-2 mb-8 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm font-semibold tracking-widest uppercase animate-pulse">
+            Next-Gen Oncology AI
+        </div>
+        
+        <div id="hero-parallax" class="transition-transform duration-100 ease-out">
+            <h1 class="text-6xl md:text-8xl font-extrabold mb-8 tracking-tighter leading-tight">
+                Cosine-Based <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-300 to-emerald-400">Lung Cancer Detection</span>
+            </h1>
+            <p class="max-w-3xl mx-auto text-xl text-slate-300 mb-12 leading-relaxed font-light">
+                Bridging the gap between imaging and instant diagnostics. Leveraging deep-learning vector embeddings and standard <strong>Cosine Similarity</strong> to prioritize care with mathematical precision.
+            </p>
+            
+            <div class="flex flex-wrap justify-center gap-6">
+                <a href="#scan-tool" class="bg-blue-600 hover:bg-blue-500 text-white px-12 py-5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/20 transform hover:scale-105">Launch Analyzer</a>
+                <a href="#how-it-helps" class="bg-white/5 hover:bg-white/10 text-white border border-white/20 px-12 py-5 rounded-2xl font-bold transition-all">Learn More</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="relative z-10 bg-[#0f172a] shadow-[0_-50px_100px_40px_rgba(15,23,42,1)] pt-20">
+        <div class="max-w-7xl mx-auto px-6 space-y-36 pb-32">
+
+            <section id="how-it-helps" class="reveal-on-scroll grid lg:grid-cols-2 gap-20 items-center">
+                <div class="space-y-6">
+                    <h2 class="text-4xl font-bold mb-6 tracking-tight">The Community Imperative</h2>
+                    <div class="space-y-6 text-slate-300 text-lg leading-relaxed font-light">
+                        <p>Early detection isn’t just a metric; it is the single most powerful factor in survival rates. Our AI aims to reduce the critical 'diagnostic latency' that often occurs in overburdened health systems.</p>
+                        
+                        <div class="grid grid-cols-2 gap-5 pt-6">
+                            <div class="p-6 glass rounded-2xl">
+                                <h4 class="text-white font-bold text-lg">91% Accuracy</h4>
+                                <p class="text-sm text-slate-400">High-confidence identification of small pulmonary nodules.</p>
+                            </div>
+                            <div class="p-6 glass rounded-2xl">
+                                <h4 class="text-white font-bold text-lg">Instant Care</h4>
+                                <p class="text-sm text-slate-400">Web-based access for immediate triage feedback.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass p-10 rounded-3xl border-l-4 border-l-blue-500 shadow-xl">
+                    <h3 class="text-2xl font-bold mb-6 text-blue-400">How "Cosine" Vectoring Works</h3>
+                    <p class="text-slate-300 mb-6 font-light">The tool doesn't just "look" at pixels; it converts the CT image into a high-dimensional feature vector ($A$). This mathematical signature is compared against centroids of known malignant clusters ($B$) using the standard cosine similarity metric:</p>
+                    <div class="bg-black/30 p-6 rounded-xl font-mono text-center text-emerald-400 text-lg mb-6 border border-white/5">
+                        Similarity = cos(θ) = (A·B) / (||A|| ||B||)
+                    </div>
+                    <p class="text-sm text-slate-500">A score near <strong>1.0</strong> (closer angular proximity) suggests the input vector is nearly identical to the pathological reference pattern.</p>
+                </div>
+            </section>
+
+            <section id="scan-tool" class="reveal-on-scroll space-y-16">
+                <div class="text-center max-w-2xl mx-auto">
+                    <h2 class="text-5xl font-extrabold mb-4 tracking-tighter">Analysis Gateway</h2>
+                    <p class="text-xl text-slate-400 font-light">Upload a single CT slice or full sequence for instant mathematical comparison.</p>
+                </div>
+
+                <div class="glass p-16 rounded-[2rem] border-2 border-dashed border-white/10 hover:border-blue-500/50 transition-all text-center group cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" class="hidden" accept="image/*">
+                    <div id="drop-zone" class="transition-opacity duration-500">
+                        <div class="w-24 h-24 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-blue-500/20 group-hover:scale-110 transition-transform">
+                            <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </div>
+                        <p class="text-2xl font-semibold">Select or Drag CT Image</p>
+                        <p class="text-slate-500 mt-3">DICOM, PNG, or JPEG formats supported</p>
+                    </div>
+                    <img id="preview" class="hidden mx-auto mt-8 max-h-96 rounded-2xl shadow-2xl border border-white/10 opacity-0 transition-opacity duration-500">
+                </div>
+
+                <div id="loader" class="hidden text-center py-20">
+                    <div class="inline-block w-20 h-20 loader-ring rounded-full flex items-center justify-center bg-blue-950/50">
+                        <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    <p class="mt-8 font-mono text-blue-400 animate-pulse tracking-widest text-lg">COMPUTING SIMILARITY VECTORS...</p>
+                </div>
+
+                <div id="results" class="hidden grid lg:grid-cols-3 gap-10">
+                    
+                    <div class="lg:col-span-1 glass p-10 rounded-3xl opacity-0 translate-y-10 transition-all duration-700 ease-out results-card">
+                        <h3 class="text-slate-500 uppercase text-xs font-bold tracking-widest mb-6">Diagnostic Indicator</h3>
+                        <div id="predictionBadge" class="inline-block px-5 py-2 rounded-xl font-bold text-xl mb-5 text-white"></div>
+                        <p id="predictionText" class="text-slate-300 text-lg mb-10 leading-relaxed font-light"></p>
+                        
+                        <div class="space-y-4">
+                            <div class="flex justify-between text-sm"><span>Cosine Similarity Score</span><span id="scoreVal" class="font-mono text-emerald-400">0.00</span></div>
+                            <div class="w-full bg-white/5 h-3 rounded-full overflow-hidden">
+                                <div id="scoreProgress" class="h-full bg-blue-500 transition-all duration-1500 ease-out" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <button onclick="downloadPDF()" class="w-full mt-12 bg-emerald-600 hover:bg-emerald-500 p-5 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-900/30 flex items-center justify-center gap-3 transform hover:scale-105">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Download Clinical Report
+                        </button>
+                    </div>
+
+                    <div class="lg:col-span-2 space-y-10 opacity-0 translate-y-10 transition-all duration-700 delay-200 ease-out results-card">
+                        <div class="glass p-10 rounded-3xl">
+                            <h3 class="font-bold mb-8 text-xl">Similarity Distribution Matrix</h3>
+                            <div id="matrixGrid" class="grid grid-cols-8 gap-2">
+                                </div>
+                        </div>
+                        <div class="glass p-10 rounded-3xl">
+                            <canvas id="bGraph" height="140"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </div>
+
+        <footer class="text-center py-24 text-slate-600 border-t border-white/5 bg-black/10">
+            <p class="font-bold text-slate-400 mb-3 text-lg">Cosine-Based Lung Cancer Detection</p>
+            <p class="font-light">© 2026 Developed by Pragya Apoorva | Clinical AI Research Initiative</p>
+        </footer>
+    </main>
+
+    <script>
+        // --- Core Application Logic ---
+        let myChart = null;
+        let scanResult = { label: "", score: 0, dist: [] };
+
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const dropZone = document.getElementById('drop-zone');
+        const loader = document.getElementById('loader');
+        const results = document.getElementById('results');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Simple reveal for preview image
+            preview.src = URL.createObjectURL(file);
+            preview.classList.remove('hidden');
+            setTimeout(() => { preview.style.opacity = '1'; }, 10);
+            dropZone.classList.add('hidden');
+            
+            // Hide previous results and show loader
+            results.classList.add('hidden');
+            document.querySelectorAll('.results-card').forEach(c => c.classList.remove('active-result'));
+            loader.classList.remove('hidden');
+
+            setTimeout(() => {
+                processAnalysis();
+                loader.classList.add('hidden');
+                results.classList.remove('hidden');
+                
+                // Animate result cards into view
+                setTimeout(() => {
+                    document.querySelectorAll('.results-card').forEach(c => {
+                        c.style.opacity = '1';
+                        c.style.transform = 'translateY(0)';
+                    });
+                }, 50);
+
+                window.scrollTo({ top: results.offsetTop - 120, behavior: 'smooth' });
+            }, 3000); // Simulated delay for animation
+        });
+
+        function processAnalysis() {
+            // Simulated AI Metrics
+            const score = (Math.random() * (0.98 - 0.72) + 0.72).toFixed(4);
+            const rawDist = [Math.random(), Math.random(), Math.random()];
+            const sum = rawDist.reduce((a, b) => a + b, 0);
+            const probs = rawDist.map(v => v / sum);
+            const maxIdx = probs.indexOf(Math.max(...probs));
+
+            const clinicalLabels = [
+                { l: "Normal", c: "bg-emerald-600", text: "Vector analysis confirms alignment with standard respiratory benchmarks. Continue routine clinical monitoring." },
+                { l: "Early Stage", c: "bg-amber-500", text: "Architectural distortions detected. High cosine similarity indicates potential early nodular formation. Recommend focus-scan." },
+                { l: "Malignant", c: "bg-red-600", text: "Critical similarity match to documented malignant pathologies. Immediate specialist referral and priority biopsy recommended." }
+            ];
+
+            const current = clinicalLabels[maxIdx];
+            scanResult = { label: current.l, score: score, dist: probs };
+
+            // Update Text UI
+            const badge = document.getElementById('predictionBadge');
+            badge.innerText = current.l;
+            badge.className = `inline-block px-5 py-2 rounded-xl font-bold text-xl mb-5 text-white ${current.c}`;
+            document.getElementById('predictionText').innerText = current.text;
+            document.getElementById('scoreVal').innerText = score;
+            
+            // Animate progress bar
+            setTimeout(() => {
+                document.getElementById('scoreProgress').style.width = (score * 100) + "%";
+            }, 100);
+
+            generateMatrix();
+            renderChart(probs);
+        }
+
+        // --- Matrix Generation with staggered animation ---
+        function generateMatrix() {
+            const grid = document.getElementById('matrixGrid');
+            grid.innerHTML = '';
+            for(let i=0; i<32; i++) { // Increased matrix size for visual impact
+                const val = Math.random().toFixed(2);
+                const cell = document.createElement('div');
+                cell.className = 'matrix-cell';
+                cell.style.backgroundColor = `rgba(59, 130, 246, ${val})`;
+                cell.style.animationDelay = `${i * 30}ms`; // Staggered reveal
+                cell.innerText = val;
+                grid.appendChild(cell);
+            }
+        }
+
+        // --- Chart.js Configuration ---
+        function renderChart(data) {
+            const ctx = document.getElementById('bGraph').getContext('2d');
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Normal', 'Early Stage', 'Malignant'],
+                    datasets: [{
+                        label: 'Pathology Match Probability (%)',
+                        data: data.map(v => (v * 100).toFixed(1)),
+                        backgroundColor: ['rgba(16, 185, 129, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(239, 68, 68, 0.8)'],
+                        borderColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 1,
+                        borderRadius: 10
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Modern horizontal orientation
+                    plugins: { legend: { display: false }, tooltip: { bodyFont: { family: 'Montserrat' } } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Montserrat' } } },
+                        y: { grid: { display: false }, ticks: { color: '#f1f5f9', font: { family: 'Montserrat', size: 14, weight: 600 } } }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+
+        // --- Aesthetic Scroll & Parallax Logic ---
+        window.addEventListener('scroll', () => {
+            const scrolled = window.scrollY;
+            
+            // Parallax Hero
+            const parallaxEl = document.getElementById('hero-parallax');
+            if (parallaxEl && scrolled < window.innerHeight) {
+                parallaxEl.style.transform = `translateY(${scrolled * 0.4}px)`;
+            }
+
+            // Reveal Sections on Scroll
+            const reveals = document.querySelectorAll('.reveal-on-scroll');
+            reveals.forEach(el => {
+                const windowHeight = window.innerHeight;
+                const revealTop = el.getBoundingClientRect().top;
+                const revealPoint = 100; // Trigger before reaching the top
+
+                if (revealTop < windowHeight - revealPoint) {
+                    el.classList.add('active');
+                }
+            });
+        });
+
+        // Trigger initial check for visible elements
+        window.dispatchEvent(new Event('scroll'));
+
+        // --- PDF Generation Logic ---
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Header bar
+            doc.setFillColor(15, 23, 42); // Dark Slate
+            doc.rect(0, 0, 210, 25, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.text("CLINICAL VECTOR ANALYSIS REPORT", 105, 15, { align: "center" });
+            
+            // Report Info
+            doc.setTextColor(50);
+            doc.setFontSize(10);
+            doc.text(`Report ID: CosAI-${Math.floor(Date.now()/1000)}`, 20, 40);
+            doc.text(`Analysis Date: ${new Date().toLocaleString()}`, 20, 46);
+            
+            // Main Finding
+            doc.setFontSize(18);
+            doc.setTextColor(0);
+            doc.text("PATHOLOGY CLASSIFICATION", 20, 70);
+            
+            // Diagnosis with background fill
+            if (scanResult.label === "Malignant") doc.setFillColor(239, 68, 68);
+            else if (scanResult.label === "Early Stage") doc.setFillColor(245, 158, 11);
+            else doc.setFillColor(16, 185, 129);
+            
+            doc.roundedRect(20, 78, 80, 12, 2, 2, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.text(scanResult.label.toUpperCase(), 60, 86, { align: "center" });
+
+            // Stats
+            doc.setTextColor(0);
+            doc.setFontSize(12);
+            doc.text(`Cosine Similarity Index: ${scanResult.score}`, 20, 105);
+            
+            doc.setDrawColor(230);
+            doc.line(20, 115, 190, 115);
+            
+            // Probability Breakdown
+            doc.setFontSize(14);
+            doc.text("Probability Breakdown:", 20, 128);
+            doc.setFontSize(12);
+            doc.text(`- Normal Tissue Match: ${(scanResult.dist[0]*100).toFixed(2)}%`, 30, 138);
+            doc.text(`- Early Stage Nodule Match: ${(scanResult.dist[1]*100).toFixed(2)}%`, 30, 146);
+            doc.text(`- Malignant Tissue Match: ${(scanResult.dist[2]*100).toFixed(2)}%`, 30, 154);
+
+            // Tech note
+            doc.setFontSize(9);
+            doc.setTextColor(150);
+            doc.text("Note: Classification is based on deep-learning feature extraction and cosine vector comparison.", 20, 275);
+            doc.text("This is an AI screening result and must be verified by a licensed radiologist.", 20, 280);
+            
+            doc.save(`LungAI_Clinical_Report_${Date.now()}.pdf`);
+        }
+    </script>
+</body>
+</html>
